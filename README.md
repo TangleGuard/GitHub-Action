@@ -1,9 +1,9 @@
 # TangleGuard Scanner
 
-TangleGuard creates an interactive graph diagram out of your source code.
+TangleGuard creates an interactive graph diagram out of your source code and uploads it to the [TangleGuard Cloud](https://directory.tangleguard.com).
 
-This GitHub Action extracts structural information from your codebase and uploads it to TangleGuard's open directory.
-There you and all collaborators can view and analyze the architecture of your project.
+This GitHub Action extracts structural information from your codebase to be analyzed on the web version of [TangleGuard](https://tangleguard.com).
+Then you, all collaborators and basically everyone can explore the architecture of your project.
 
 > [!IMPORTANT]
 > The dependency graph and hence the code architecture of the scanned project will be made public.
