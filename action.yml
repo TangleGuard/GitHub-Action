@@ -1,6 +1,23 @@
-name: "TangleGuard Linter (Beta)"
-description: "Runs TangleGuard CLI to detect architecture drift"
+name: "TangleGuard (Beta)"
+description: "Abstracts your codebase into an interactive dependency graph diagram for architectural analysis."
 author: "Jan Arends"
+inputs:
+  path:
+    description: "Path to scan"
+    required: false
+    default: "."
+  upload_results:
+    description: "Upload scan results to TangleGuard server"
+    required: true
+  repository:
+    description: "Repository in format 'owner/project' (optional, will be extracted from Git if not provided)"
+    required: false
+  description:
+    description: "Project description for uploaded results (optional, will be extracted from Git if not provided)"
+    required: false
+  language:
+    description: "Programming language (rust|javascript)"
+    required: true
 
 runs:
   using: "composite"
@@ -12,7 +29,7 @@ runs:
       shell: bash
       run: |
         echo "Downloading TangleGuard CLI..."
-        if ! curl -L -o tangleguard-cli https://nbg1.your-objectstorage.com/tangleguard/releases/latest/tangleguard-cli; then
+        if ! curl -L -o tangleguard-cli https://tangleguard-builds.s3.eu-central-1.amazonaws.com/cli/latest/tangleguard-cli; then
           echo "❌ Failed to download TangleGuard CLI"
           exit 1
         fi
@@ -25,27 +42,42 @@ runs:
           echo "❌ TangleGuard CLI is not executable"
           exit 1
         fi
+        echo "✅ TangleGuard CLI downloaded"
 
-        echo "✅ TangleGuard CLI downloaded successfully"
-        ./tangleguard-cli --help | head -3
+    # Validation is currently under construction and available again soon
+    # - name: Run TangleGuard validation
+    #   shell: bash
+    #   run: |
+    #     echo "🔍 Running TangleGuard validation..."
+    #     if ./tangleguard-cli -l ${{ inputs.language }} -p ${{ inputs.path }} validate; then
+    #       echo "✅ TangleGuard validation passed"
+    #     else
+    #       exit_code=$?
+    #       if [[ $exit_code -eq 1 ]]; then
+    #         echo "❌ TangleGuard found architecture violations"
+    #       else
+    #         echo "❌ TangleGuard validation failed with error (exit code: $exit_code)"
+    #       fi
+    #       if [[ "${{ inputs.fail_on_findings }}" == "true" ]]; then
+    #         exit $exit_code
+    #       fi
+    #     fi
+    #   id: cli_execution
 
-    - name: Run TangleGuard validation
+    - name: Upload results to TangleGuard Cloud
       shell: bash
-      # working-directory: ${{ inputs.working_directory }}
+      if: ${{ inputs.upload_results == 'true' }}
       run: |
-        echo "🔍 Running TangleGuard validation..."
-        if ./tangleguard-cli validate-all; then
-          echo "✅ TangleGuard validation passed"
-        else
-          exit_code=$?
-          if [[ $exit_code -eq 1 ]]; then
-            echo "❌ TangleGuard found architecture violations"
-          else
-            echo "❌ TangleGuard validation failed with error (exit code: $exit_code)"
-          fi
-          exit $exit_code
+        echo "Scanning workspace and uploading results to TangleGuard Cloud..."
+
+        # Scan and upload results
+        upload_cmd="./tangleguard-cli --language ${{ inputs.language }} --path ${{ inputs.path }} upload"
+
+        if [[ -n "${{ inputs.description }}" ]]; then
+          upload_cmd="$upload_cmd --description \"${{ inputs.description }}\""
         fi
-      id: cli_execution
+
+        eval $upload_cmd
 
 branding:
   icon: "layers"
