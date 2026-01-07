@@ -18,7 +18,8 @@ More information:
 
 Below you see what the action does in detail:
 
-- Checks out your repository
+- Validates required input parameters
+- Checks out your repository  
 - Downloads TangleGuard CLI and makes it executable
 - Extracts repository metadata (owner, name, host) from `.git`
 - Scans the workspace for architectural dependencies
@@ -26,10 +27,12 @@ Below you see what the action does in detail:
 
 ## Usage Example
 
-There are two mandatory inputs:
+There are four mandatory inputs:
 
 - `language`: Which let's you select the correct scanner to be used
-- `upload_results`: Explicitly agree that the results are uploaded to the TangleGuard Cloud
+- `upload_results`: Must be set to "true" - the only supported option during evaluation phase
+- `make_public`: Must be set to "true" - private scan results are not yet supported
+- `description`: Project description for better identification on the website
 
 ```yaml
 name: TangleGuard Scan
@@ -41,19 +44,21 @@ jobs:
       - uses: TangleGuard/github-action@main
         with:
           upload_results: "true"
+          make_public: "true"
           language: "rust"
-          description: "Some information about the project which to which the visualization belongs."
+          description: "A Rust-based CLI tool for dependency analysis and architectural visualization"
 ```
 
 ## Inputs
 
 | Input            | Description                                                            | Required | Default |
 | ---------------- | ---------------------------------------------------------------------- | -------- | ------- |
-| `upload_results` | Upload scan results to TangleGuard server                              | Yes      | -       |
+| `upload_results` | Must be "true" - only supported option during evaluation phase         | Yes      | -       |
+| `make_public`    | Must be "true" - private scan results are not yet supported           | Yes      | -       |
 | `repository`     | Repository in format 'owner/project' (auto-detected from Git if empty) | No       | -       |
 | `language`       | Programming language (rust/javascript)                                 | Yes      | -       |
 | `path`           | Path to scan                                                           | No       | `.`     |
-| `description`    | Project description (auto-detected from GitHub API if empty)           | No       | -       |
+| `description`    | Project description for better identification on website               | Yes      | -       |
 
 ## License
 
