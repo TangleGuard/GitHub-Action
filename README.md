@@ -6,8 +6,9 @@ This GitHub Action extracts structural information from your codebase to be anal
 Then you, all collaborators and basically everyone can explore the architecture of your project.
 
 > [!IMPORTANT]
-> The dependency graph and hence the code architecture of the scanned project will be made public.
-> To delete the project from the directory, please contact kontakt@jaads.de.
+> The architecture of the scanned project will be made public.
+> Private scan results will be supported in future.
+> To delete the project from the directory, please contact the owner directly via kontakt@jaads.de or create an issue.
 
 More information:
 
@@ -19,7 +20,7 @@ More information:
 Below you see what the action does in detail:
 
 - Validates required input parameters
-- Checks out your repository  
+- Checks out your repository
 - Downloads TangleGuard CLI and makes it executable
 - Extracts repository metadata (owner, name, host) from `.git`
 - Scans the workspace for architectural dependencies
@@ -54,7 +55,7 @@ jobs:
 | Input            | Description                                                            | Required | Default |
 | ---------------- | ---------------------------------------------------------------------- | -------- | ------- |
 | `upload_results` | Must be "true" - only supported option during evaluation phase         | Yes      | -       |
-| `make_public`    | Must be "true" - private scan results are not yet supported           | Yes      | -       |
+| `make_public`    | Must be "true" - private scan results are not yet supported            | Yes      | -       |
 | `repository`     | Repository in format 'owner/project' (auto-detected from Git if empty) | No       | -       |
 | `language`       | Programming language (rust/javascript)                                 | Yes      | -       |
 | `path`           | Path to scan                                                           | No       | `.`     |
