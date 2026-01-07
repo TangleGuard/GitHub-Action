@@ -2,19 +2,18 @@ name: "TangleGuard (Beta)"
 description: "Abstracts your codebase into an interactive dependency graph diagram for architectural analysis."
 author: "Jan Arends"
 inputs:
-  path:
-    description: "Path to scan"
-    required: false
-    default: "."
   upload_results:
-    description: "Upload scan results to TangleGuard server"
+    description: "Whether to upload scan results to TangleGuard Cloud or not (must be true - no other option available in evaluation phase)"
+    required: true
+  make_public:
+    description: "Whether to make scan results publicly available (must be true - private scan results are not yet supported)"
     required: true
   repository:
     description: "Repository in format 'owner/project' (optional, will be extracted from Git if not provided)"
     required: false
   description:
-    description: "Project description for uploaded results (optional, will be extracted from Git if not provided)"
-    required: false
+    description: "Project description for uploaded results (required for better project identification on website)"
+    required: true
   language:
     description: "Programming language (rust|javascript)"
     required: true
@@ -22,6 +21,31 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Validate input parameters
+      shell: bash
+      run: |
+        echo "🔍 Validating input parameters..."
+
+        if [[ "${{ inputs.upload_results }}" != "true" ]]; then
+          echo "❌ Error: upload_results must be set to 'true'. This is currently the only supported option in the evaluation phase."
+          echo "   Scan results will be uploaded to TangleGuard Cloud as this is an open-source evaluation."
+          exit 1
+        fi
+
+        if [[ "${{ inputs.make_public }}" != "true" ]]; then
+          echo "❌ Error: Private scan results are not yet supported."
+          echo "   Please set make_public to 'true' to continue with public scan results."
+          exit 1
+        fi
+
+        if [[ -z "${{ inputs.description }}" ]]; then
+          echo "❌ Error: description is required."
+          echo "   Please provide a project description for better identification on the website."
+          exit 1
+        fi
+
+        echo "✅ Input validation passed"
+
     - name: Checkout repository
       uses: actions/checkout@v5
 
