@@ -17,6 +17,10 @@ inputs:
   language:
     description: "Programming language (rust|javascript)"
     required: true
+  path:
+    description: "Path to the workspace to analyze (defaults to current directory)"
+    required: false
+    default: "."
 
 runs:
   using: "composite"
@@ -95,10 +99,23 @@ runs:
         echo "Scanning workspace and uploading results to TangleGuard Cloud..."
 
         # Scan and upload results
-        upload_cmd="./tangleguard-cli --language ${{ inputs.language }} --path ${{ inputs.path }} upload"
-
+        upload_cmd="./tangleguard-cli --language ${{ inputs.language }}"
+        
+        # Add path if specified (default is current directory)
+        if [[ -n "${{ inputs.path }}" ]]; then
+          upload_cmd="$upload_cmd --path ${{ inputs.path }}"
+        fi
+        
+        # Add upload subcommand
+        upload_cmd="$upload_cmd upload"
+        
+        # Add upload subcommand arguments
         if [[ -n "${{ inputs.description }}" ]]; then
           upload_cmd="$upload_cmd --description \"${{ inputs.description }}\""
+        fi
+        
+        if [[ -n "${{ inputs.repository }}" ]]; then
+          upload_cmd="$upload_cmd --repository \"${{ inputs.repository }}\""
         fi
 
         eval $upload_cmd
