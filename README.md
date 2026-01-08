@@ -1,6 +1,6 @@
 # TangleGuard Scanner
 
-TangleGuard creates an interactive graph diagram out of your source code and uploads it to the [TangleGuard Cloud](https://directory.tangleguard.com).
+TangleGuard creates an interactive graph diagram out of your source code and uploads it to the [TangleGuard Cloud](https://app.tangleguard.com).
 
 This GitHub Action extracts structural information from your codebase to be analyzed on the web version of [TangleGuard](https://tangleguard.com).
 Then you, all collaborators and basically everyone can explore the architecture of your project.
@@ -61,8 +61,14 @@ jobs:
 | `path`           | Path to scan                                                           | No       | `.`     |
 | `description`    | Project description for better identification on website               | Yes      | -       |
 
+
 ## License
 
-This GitHub Action is licensed under the MIT License.
+This GitHub Action is licensed under the MIT License (see LICENSE file).
 
-However, this action downloads and uses TangleGuard CLI, which is a proprietary software with its own license terms.
+However, this action downloads and uses the TangleGuard CLI tool, which is proprietary software subject to separate license terms.
+By using this GitHub Action, you agree to the [TangleGuard EULA](https://docs.tangleguard.com/legal/terms/).
+
+**Summary:**
+- **GitHub Action Code**: MIT License
+- **TangleGuard CLI Tool**: Proprietary (see EULA)
