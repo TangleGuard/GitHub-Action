@@ -1,30 +1,20 @@
 # TangleGuard Scanner
 
-TangleGuard creates an interactive graph diagram out of your source code and uploads it to the [TangleGuard Cloud](https://app.tangleguard.com).
+[TangleGuard](https://tangleguard.com/) is a tool to monitor and enforce your software architecture.
 
-This GitHub Action extracts structural information from your codebase to be analyzed on the web version of [TangleGuard](https://tangleguard.com).
-Then you, all collaborators and basically everyone can explore the architecture of your project.
+With this GitHub Action you can integrate your architecture into [TangleGuard's public directory](https://app.tangleguard.com), where is can be **viewed and analyzed by anybody**. Private scans will be supported in the future too.
 
-> [!IMPORTANT]
-> The architecture of the scanned project will be made public.
-> Private scan results will be supported in future.
-> To delete the project from the directory, please contact the owner directly via kontakt@jaads.de or create an issue.
-
-More information:
-
-- Website https://tangleguard.com/
-- Documentation https://docs.tangleguard.com/
+![Screenshot](screenshot.png)
 
 ## Procedure
 
-Below you see what the action does in detail:
+Below you see what the action does in detail.
 
-- Validates required input parameters
 - Checks out your repository
 - Downloads TangleGuard CLI and makes it executable
 - Extracts repository metadata (owner, name, host) from `.git`
-- Scans the workspace for architectural dependencies
-- Uploads scan results with rich metadata to TangleGuard server where it can be explored
+- Scans the architectural of your project
+- Uploads scan results to TangleGuard Cloud
 
 ## Usage Example
 
@@ -61,6 +51,9 @@ jobs:
 | `path`           | Path to scan                                                           | No       | `.`     |
 | `description`    | Project description for better identification on website               | Yes      | -       |
 
+## Deletion of projects from the public directory
+
+To delete the project from the directory, please contact the owner directly via kontakt@jaads.de or create an issue.
 
 ## License
 
@@ -70,5 +63,6 @@ However, this action downloads and uses the TangleGuard CLI tool, which is propr
 By using this GitHub Action, you agree to the [TangleGuard EULA](https://docs.tangleguard.com/legal/terms/).
 
 **Summary:**
+
 - **GitHub Action Code**: MIT License
 - **TangleGuard CLI Tool**: Proprietary (see EULA)
