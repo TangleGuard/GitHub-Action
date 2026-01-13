@@ -21,6 +21,9 @@ inputs:
     description: "Path to the workspace to analyze (defaults to current directory)"
     required: false
     default: "."
+  ignore_paths:
+    description: "Comma-separated list of directory names to ignore during scanning (e.g., 'examples,benchmarks')"
+    required: false
 
 runs:
   using: "composite"
@@ -100,20 +103,25 @@ runs:
 
         # Scan and upload results
         upload_cmd="./tangleguard-cli --language ${{ inputs.language }}"
-        
+
         # Add path if specified (default is current directory)
         if [[ -n "${{ inputs.path }}" ]]; then
           upload_cmd="$upload_cmd --path ${{ inputs.path }}"
         fi
-        
+
+        # Add ignore paths if specified
+        if [[ -n "${{ inputs.ignore_paths }}" ]]; then
+          upload_cmd="$upload_cmd --ignore-paths ${{ inputs.ignore_paths }}"
+        fi
+
         # Add upload subcommand
         upload_cmd="$upload_cmd upload"
-        
+
         # Add upload subcommand arguments
         if [[ -n "${{ inputs.description }}" ]]; then
           upload_cmd="$upload_cmd --description \"${{ inputs.description }}\""
         fi
-        
+
         if [[ -n "${{ inputs.repository }}" ]]; then
           upload_cmd="$upload_cmd --repository \"${{ inputs.repository }}\""
         fi
