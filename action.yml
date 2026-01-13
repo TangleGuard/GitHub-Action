@@ -1,4 +1,4 @@
-name: "TangleGuard (Beta)"
+name: "TangleGuard"
 description: "Abstracts your codebase into an interactive dependency graph diagram for architectural analysis."
 author: "Jan Arends"
 inputs:
