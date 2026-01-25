@@ -6,21 +6,28 @@ With this GitHub Action you can integrate your architecture into [TangleGuard's 
 
 ![Screenshot](screenshot.png)
 
-## Procedure
+## Inputs
 
-Below you see what the action does in detail.
+This GitHub Action can be configured in a few ways, depending on your needs. Below you find some examples, which should help you get started.
 
-- Checks out your repository
-- Downloads TangleGuard CLI and makes it executable
-- Extracts repository metadata (owner, name, host) from `.git`
-- Scans the architectural of your project
-- Uploads scan results to TangleGuard Cloud
+| Input              | Description                                                                 | Required | Default |
+| ------------------ | --------------------------------------------------------------------------- | -------- | ------- |
+| `upload_results`   | Must be "true" - only supported option during evaluation phase              | Yes      | -       |
+| `make_public`      | Must be "true" - private scan results are not yet supported                 | Yes      | -       |
+| `repository`       | Repository in format 'owner/project' (auto-detected from Git if empty)      | No       | -       |
+| `language`         | Programming language (rust/javascript)                                      | Yes      | -       |
+| `path`             | Path to scan                                                                | No       | `.`     |
+| `description`      | Project description for better identification on website                    | Yes      | -       |
+| `ignore_paths`     | Comma-separated list of directories to ignore (e.g., 'examples,benchmarks') | No       | -       |
+| `fail_on_findings` | Fail the workflow if circular dependencies are found                        | No       | `true`  |
 
 ## Usage Example
 
 ### On PR: Fail if Circular Dependencies were detected
 
 Use this example if you only want to validate your codebase for circular dependencies and fail the workflow if any are found. This is useful for enforcing architecture rules in pull requests.
+
+Copy it over if you like. It's a working example and a very common use case.
 
 ```yaml
 name: Architecture Validation
@@ -42,7 +49,8 @@ Set `fail_on_findings: "false"` if you want to see the validation results withou
 ### On PR: Upload to Public Directory
 
 This is for open source projects ONLY.
-We'd be happy to host the UI for the monitoring if you work on a public projects which is licensed under the MIT license or Apache 2.0 license. Private and proprietary repositories will be supported, too. TangleGuard keeps you architecture data very serious. To support private repositories, TangleGurd want to have setup a proper multi tenantcy secure plattform. This will need recourses to implemenet and infrastructure. If you are interested in a hosted, private version of TangleGuard, please contact us at kontakt@jaads.de.
+
+We'd be happy to host the UI for the monitoring if you work on a public projects which is licensed under the MIT license or Apache 2.0 license.
 
 ```yaml
 name: TangleGuard Scan
@@ -53,24 +61,13 @@ jobs:
     steps:
       - uses: TangleGuard/github-action@main
         with:
-          upload_results: "true"
-          make_public: "true"
-          language: "rust"
-          description: "A Rust-based CLI tool for dependency analysis and architectural visualization"
+          upload_results: "true" # <-- Understand
+          make_public: "true" # <-- Understand
+          language: "rust" # <-- ADJUST
+          description: "A CLI tool that.. " # <-- ADJUST
 ```
 
-## Inputs
-
-| Input              | Description                                                                 | Required | Default |
-| ------------------ | --------------------------------------------------------------------------- | -------- | ------- |
-| `upload_results`   | Must be "true" - only supported option during evaluation phase              | Yes      | -       |
-| `make_public`      | Must be "true" - private scan results are not yet supported                 | Yes      | -       |
-| `repository`       | Repository in format 'owner/project' (auto-detected from Git if empty)      | No       | -       |
-| `language`         | Programming language (rust/javascript)                                      | Yes      | -       |
-| `path`             | Path to scan                                                                | No       | `.`     |
-| `description`      | Project description for better identification on website                    | Yes      | -       |
-| `ignore_paths`     | Comma-separated list of directories to ignore (e.g., 'examples,benchmarks') | No       | -       |
-| `fail_on_findings` | Fail the workflow if circular dependencies are found                        | No       | `true`  |
+Private and proprietary repositories will be supported, too. TangleGuard keeps you architecture data very serious. To support private repositories, TangleGuard wants to have setup a proper multi-tenant secure platform. This will need resources to implement and infrastructure. If you are interested in a hosted, private version of TangleGuard, please contact us at kontakt@jaads.de.
 
 ## Deletion of projects from the public directory
 
