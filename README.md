@@ -18,33 +18,7 @@ Below you see what the action does in detail.
 
 ## Usage Example
 
-There are four mandatory inputs:
-
-- `language`: Which let's you select the correct scanner to be used
-- `upload_results`: Must be set to "true" - the only supported option during evaluation phase
-- `make_public`: Must be set to "true" - private scan results are not yet supported
-- `description`: Project description for better identification on the website
-
-There are also optional inputs like `ignore_paths` to exclude specific directories from scanning, and `fail_on_findings` to control CI behavior.
-
-### Upload to TangleGuard Cloud
-
-```yaml
-name: TangleGuard Scan
-on: [push, pull_request]
-jobs:
-  scan-workspace:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: TangleGuard/github-action@main
-        with:
-          upload_results: "true"
-          make_public: "true"
-          language: "rust"
-          description: "A Rust-based CLI tool for dependency analysis and architectural visualization"
-```
-
-### Validate Only (CI/CD)
+### On PR: Fail if Circular Dependencies were detected
 
 Use this example if you only want to validate your codebase for circular dependencies and fail the workflow if any are found. This is useful for enforcing architecture rules in pull requests.
 
@@ -64,6 +38,26 @@ jobs:
 ```
 
 Set `fail_on_findings: "false"` if you want to see the validation results without failing the workflow.
+
+### On PR: Upload to Public Directory
+
+This is for open source projects ONLY.
+We'd be happy to host the UI for the monitoring if you work on a public projects which is licensed under the MIT license or Apache 2.0 license. Private and proprietary repositories will be supported, too. TangleGuard keeps you architecture data very serious. To support private repositories, TangleGurd want to have setup a proper multi tenantcy secure plattform. This will need recourses to implemenet and infrastructure. If you are interested in a hosted, private version of TangleGuard, please contact us at kontakt@jaads.de.
+
+```yaml
+name: TangleGuard Scan
+on: [push, pull_request]
+jobs:
+  scan-workspace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: TangleGuard/github-action@main
+        with:
+          upload_results: "true"
+          make_public: "true"
+          language: "rust"
+          description: "A Rust-based CLI tool for dependency analysis and architectural visualization"
+```
 
 ## Inputs
 
