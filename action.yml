@@ -24,6 +24,10 @@ inputs:
   ignore_paths:
     description: "Comma-separated list of directory names to ignore during scanning (e.g., 'examples,benchmarks')"
     required: false
+  fail_on_findings:
+    description: "Whether to fail the action if any findings are detected"
+    required: false
+    default: "true"
 
 runs:
   using: "composite"
@@ -75,25 +79,35 @@ runs:
         fi
         echo "✅ TangleGuard CLI downloaded"
 
-    # Validation is currently under construction and available again soon
-    # - name: Run TangleGuard validation
-    #   shell: bash
-    #   run: |
-    #     echo "🔍 Running TangleGuard validation..."
-    #     if ./tangleguard-cli -l ${{ inputs.language }} -p ${{ inputs.path }} validate; then
-    #       echo "✅ TangleGuard validation passed"
-    #     else
-    #       exit_code=$?
-    #       if [[ $exit_code -eq 1 ]]; then
-    #         echo "❌ TangleGuard found architecture violations"
-    #       else
-    #         echo "❌ TangleGuard validation failed with error (exit code: $exit_code)"
-    #       fi
-    #       if [[ "${{ inputs.fail_on_findings }}" == "true" ]]; then
-    #         exit $exit_code
-    #       fi
-    #     fi
-    #   id: cli_execution
+    - name: Run TangleGuard validation
+      shell: bash
+      run: |
+        echo "🔍 Running TangleGuard validation..."
+        
+        validate_cmd="./tangleguard-cli -l ${{ inputs.language }} -p ${{ inputs.path }}"
+        
+        # Add ignore paths if specified
+        if [[ -n "${{ inputs.ignore_paths }}" ]]; then
+          validate_cmd="$validate_cmd --ignore-paths ${{ inputs.ignore_paths }}"
+        fi
+        
+        validate_cmd="$validate_cmd validate"
+        
+        # Add --ci flag if fail_on_findings is true
+        if [[ "${{ inputs.fail_on_findings }}" == "true" ]]; then
+          validate_cmd="$validate_cmd --ci"
+        fi
+        
+        echo "Running: $validate_cmd"
+        eval $validate_cmd
+        exit_code=$?
+        
+        if [[ $exit_code -eq 0 ]]; then
+          echo "✅ TangleGuard validation passed"
+        else
+          echo "❌ TangleGuard found architecture issues (exit code: $exit_code)"
+          exit $exit_code
+        fi
 
     - name: Upload results to TangleGuard Cloud
       shell: bash
