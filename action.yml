@@ -3,17 +3,15 @@ description: "Abstracts your codebase into an interactive dependency graph diagr
 author: "Jan Arends"
 inputs:
   upload_results:
-    description: "Whether to upload scan results to TangleGuard Cloud or not (must be true - no other option available in evaluation phase)"
-    required: true
-  make_public:
-    description: "Whether to make scan results publicly available (must be true - private scan results are not yet supported)"
-    required: true
+    description: "To upload the scan result to TangleGuard Cloud for further analysis"
+    required: false
+    default: "false"
   repository:
     description: "Repository in format 'owner/project' (optional, will be extracted from Git if not provided)"
     required: false
   description:
-    description: "Project description for uploaded results (required for better project identification on website)"
-    required: true
+    description: "Project description for TangleGuard Cloud"
+    required: false
   language:
     description: "Programming language (rust|javascript)"
     required: true
@@ -43,14 +41,9 @@ runs:
           exit 1
         fi
 
-        if [[ "${{ inputs.make_public }}" != "true" ]]; then
-          echo "❌ Error: Private scan results are not yet supported."
-          echo "   Please set make_public to 'true' to continue with public scan results."
-          exit 1
-        fi
-
-        if [[ -z "${{ inputs.description }}" ]]; then
-          echo "❌ Error: description is required."
+        # Description is required when uploading results
+        if [[ "${{ inputs.upload_results }}" == "true" && -z "${{ inputs.description }}" ]]; then
+          echo "❌ Error: description is required when upload_results is enabled."
           echo "   Please provide a project description for better identification on the website."
           exit 1
         fi
@@ -83,25 +76,25 @@ runs:
       shell: bash
       run: |
         echo "🔍 Running TangleGuard validation..."
-        
+
         validate_cmd="./tangleguard-cli -l ${{ inputs.language }} -p ${{ inputs.path }}"
-        
+
         # Add ignore paths if specified
         if [[ -n "${{ inputs.ignore_paths }}" ]]; then
           validate_cmd="$validate_cmd --ignore-paths ${{ inputs.ignore_paths }}"
         fi
-        
+
         validate_cmd="$validate_cmd validate"
-        
+
         # Add --ci flag if fail_on_findings is true
         if [[ "${{ inputs.fail_on_findings }}" == "true" ]]; then
           validate_cmd="$validate_cmd --ci"
         fi
-        
+
         echo "Running: $validate_cmd"
         eval $validate_cmd
         exit_code=$?
-        
+
         if [[ $exit_code -eq 0 ]]; then
           echo "✅ TangleGuard validation passed"
         else
