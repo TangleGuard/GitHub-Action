@@ -35,12 +35,6 @@ runs:
       run: |
         echo "🔍 Validating input parameters..."
 
-        if [[ "${{ inputs.upload_results }}" != "true" ]]; then
-          echo "❌ Error: upload_results must be set to 'true'. This is currently the only supported option in the evaluation phase."
-          echo "   Scan results will be uploaded to TangleGuard Cloud as this is an open-source evaluation."
-          exit 1
-        fi
-
         # Description is required when uploading results
         if [[ "${{ inputs.upload_results }}" == "true" && -z "${{ inputs.description }}" ]]; then
           echo "❌ Error: description is required when upload_results is enabled."
