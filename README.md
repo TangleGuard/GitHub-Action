@@ -2,23 +2,12 @@
 
 [TangleGuard](https://tangleguard.com/) is a tool to monitor and enforce your software architecture.
 
-With this GitHub Action you can integrate your architecture into [TangleGuard's public directory](https://app.tangleguard.com), where is can be **viewed and analyzed by anybody**. Private scans will be supported in the future too.
+You basically have two options how to use this Action:
+
+1. Use the architectural linter: You can run the action on a PR and it will fail if circular dependencies are found and hence the PR could be blocked. That way you ensure your code does not get tangled and does not include anti patterns. See the first example below.
+1. Upload results to TangleGuard Cloud: You can run the action e.g. manually, then the codebase within the GitHub runner and send to results to the Cloud version of TangleGuard. This is currently a **public** directory and hence only made for open source projects. See the second example below.
 
 ![Screenshot](screenshot.png)
-
-## Inputs
-
-This GitHub Action can be configured in a few ways, depending on your needs. Below you find some examples, which should help you get started.
-
-| Input              | Description                                                                 | Required                         | Default |
-| ------------------ | --------------------------------------------------------------------------- | -------------------------------- | ------- |
-| `upload_results`   | Upload scan results to TangleGuard Cloud (public directory)                 | No                               | false   |
-| `repository`       | Repository in format 'owner/project' (auto-detected from Git if empty)      | No                               | -       |
-| `language`         | Programming language (rust/javascript)                                      | Yes                              | -       |
-| `path`             | Path to scan                                                                | No                               | `.`     |
-| `description`      | Project description for better identification on website                    | Yes (when `upload_results=true`) | -       |
-| `ignore_paths`     | Comma-separated list of directories to ignore (e.g., 'examples,benchmarks') | No                               | -       |
-| `fail_on_findings` | Fail the workflow if circular dependencies are found                        | No                               | true    |
 
 ## Usage Example
 
@@ -64,6 +53,20 @@ jobs:
 ```
 
 Private and proprietary repositories will be supported, too. TangleGuard keeps you architecture data very serious. To support private repositories, TangleGuard wants to have setup a proper multi-tenant secure platform. This will need resources to implement and infrastructure. If you are interested in a hosted, private version of TangleGuard, please contact us at kontakt@jaads.de.
+
+## All Inputs
+
+This GitHub Action can be configured in a few ways, depending on your needs. Below you find some examples, which should help you get started.
+
+| Input              | Description                                                                 | Required                         | Default |
+| ------------------ | --------------------------------------------------------------------------- | -------------------------------- | ------- |
+| `upload_results`   | Upload scan results to TangleGuard Cloud (public directory)                 | No                               | false   |
+| `repository`       | Repository in format 'owner/project' (auto-detected from Git if empty)      | No                               | -       |
+| `language`         | Programming language (rust/javascript)                                      | Yes                              | -       |
+| `path`             | Path to scan                                                                | No                               | `.`     |
+| `description`      | Project description for better identification on website                    | Yes (when `upload_results=true`) | -       |
+| `ignore_paths`     | Comma-separated list of directories to ignore (e.g., 'examples,benchmarks') | No                               | -       |
+| `fail_on_findings` | Fail the workflow if circular dependencies are found                        | No                               | true    |
 
 ## Deletion of projects from the public directory
 
