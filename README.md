@@ -5,7 +5,7 @@
 You basically have two options how to use this Action:
 
 1. Use the architectural linter: You can run the action on a PR and it will fail if circular dependencies are found and hence the PR could be blocked. That way you ensure your code does not get tangled and does not include anti patterns. See the first example below.
-1. Upload results to TangleGuard Cloud: You can run the action e.g. manually, then the codebase within the GitHub runner and send to results to the Cloud version of TangleGuard. This is currently a **public** directory and hence only made for open source projects. See the second example below.
+1. Upload results to TangleGuard Cloud: You can run the action e.g. manually, then the codebase within the GitHub runner and send to results to the [Cloud version of TangleGuard](https://app.tangleguard.com). There the dependencies can be analyzed visually without having to install anything locally. This is currently a **public** directory and hence only made for open source projects. See the second example below.
 
 ![Screenshot](screenshot.png)
 
