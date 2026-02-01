@@ -26,6 +26,10 @@ inputs:
     description: "Whether to fail the action if any findings are detected"
     required: false
     default: "true"
+  detect_change:
+    description: "Whether to run change detection between PR base and head (only works on pull_request events)"
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -66,8 +70,9 @@ runs:
         fi
         echo "✅ TangleGuard CLI downloaded"
 
-    - name: Run TangleGuard validation
+    - name: Run TangleGuard one-time validation
       shell: bash
+      if: ${{ inputs.detect_change == 'false' }}
       run: |
         echo "🔍 Running TangleGuard validation..."
 
@@ -78,7 +83,7 @@ runs:
           validate_cmd="$validate_cmd --ignore-paths ${{ inputs.ignore_paths }}"
         fi
 
-        validate_cmd="$validate_cmd validate"
+        validate_cmd="$validate_cmd validate run --circles --pretty"
 
         # Add --ci flag if fail_on_findings is true
         if [[ "${{ inputs.fail_on_findings }}" == "true" ]]; then
@@ -95,6 +100,232 @@ runs:
           echo "❌ TangleGuard found architecture issues (exit code: $exit_code)"
           exit $exit_code
         fi
+
+    - name: Run TangleGuard change detection
+      id: change_detection
+      shell: bash
+      if: ${{ inputs.detect_change == 'true' }}
+      run: |
+        echo "🔍 Running TangleGuard change detection..."
+
+        # Check if we're in a PR context
+        if [[ -z "${{ github.event.pull_request.base.sha }}" ]]; then
+          echo "⚠️  Warning: detect_change is enabled but this is not a pull_request event."
+          echo "   Change detection requires base and head commits from a pull request."
+          echo "   Falling back to regular validation on current commit..."
+
+          validate_cmd="./tangleguard-cli -l ${{ inputs.language }} -p ${{ inputs.path }}"
+          if [[ -n "${{ inputs.ignore_paths }}" ]]; then
+            validate_cmd="$validate_cmd --ignore-paths ${{ inputs.ignore_paths }}"
+          fi
+          validate_cmd="$validate_cmd validate run --circles --pretty"
+          if [[ "${{ inputs.fail_on_findings }}" == "true" ]]; then
+            validate_cmd="$validate_cmd --ci"
+          fi
+          eval $validate_cmd
+          exit $?
+        fi
+
+        BASE_SHA="${{ github.event.pull_request.base.sha }}"
+        HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+        echo "📊 Analyzing changes between:"
+        echo "   Base: $BASE_SHA"
+        echo "   Head: $HEAD_SHA"
+        echo ""
+
+        # Build base command
+        base_cmd="./tangleguard-cli -l ${{ inputs.language }} -p ${{ inputs.path }}"
+        if [[ -n "${{ inputs.ignore_paths }}" ]]; then
+          base_cmd="$base_cmd --ignore-paths ${{ inputs.ignore_paths }}"
+        fi
+        base_cmd="$base_cmd validate run --circles"
+
+        # Run analysis on BASE commit
+        echo "🔍 Analyzing BASE commit ($BASE_SHA)..."
+        git fetch origin "$BASE_SHA" --depth=1
+        git checkout "$BASE_SHA"
+
+        $base_cmd > base.json 2>&1 || true
+        base_exit_code=$?
+
+        echo "Base analysis complete (exit code: $base_exit_code)"
+
+        # Run analysis on HEAD commit
+        echo "🔍 Analyzing HEAD commit ($HEAD_SHA)..."
+        git checkout "$HEAD_SHA"
+
+        $base_cmd > head.json 2>&1 || true
+        head_exit_code=$?
+
+        echo "Head analysis complete (exit code: $head_exit_code)"
+
+        # Run diff command to compare results
+        echo "🔍 Computing diff..."
+        ./tangleguard-cli validate diff base.json head.json > diff.json 2>&1 || true
+        diff_exit_code=$?
+
+        echo "Diff computation complete (exit code: $diff_exit_code)"
+
+        # Save outputs for the next step
+        echo "base_sha=$BASE_SHA" >> $GITHUB_OUTPUT
+        echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+        echo "diff_exit_code=$diff_exit_code" >> $GITHUB_OUTPUT
+
+        # Save diff JSON output
+        {
+          echo "diff_json<<EOF"
+          cat diff.json
+          echo "EOF"
+        } >> $GITHUB_OUTPUT
+
+    - name: Post PR comment with change detection results
+      if: ${{ inputs.detect_change == 'true' && github.event.pull_request.number }}
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const diffJson = `${{ steps.change_detection.outputs.diff_json }}`;
+          const baseSha = '${{ steps.change_detection.outputs.base_sha }}';
+          const headSha = '${{ steps.change_detection.outputs.head_sha }}';
+          const diffExitCode = parseInt('${{ steps.change_detection.outputs.diff_exit_code }}');
+          const failOnFindings = '${{ inputs.fail_on_findings }}' === 'true';
+
+          let diff;
+          try {
+            diff = JSON.parse(diffJson);
+          } catch (e) {
+            console.error('Failed to parse diff JSON:', e);
+            core.setFailed('Failed to parse validation diff results');
+            return;
+          }
+
+          // Determine status from diff
+          const status = diff.summary.status;
+          let statusEmoji, statusTitle, statusDescription, shouldFail;
+
+          switch (status) {
+            case 'clean':
+              statusEmoji = '✅';
+              statusTitle = 'No Architecture Issues';
+              statusDescription = 'No circular dependencies or architecture violations found.';
+              shouldFail = false;
+              break;
+            case 'improved':
+              statusEmoji = '🎉';
+              statusTitle = 'Issues Resolved';
+              statusDescription = 'Great job! This PR fixes existing architecture issues.';
+              shouldFail = false;
+              break;
+            case 'worsened':
+              statusEmoji = '❌';
+              statusTitle = 'New Issues Introduced';
+              statusDescription = '**This PR introduces new architecture violations!** Please review the details below and fix the issues before merging.';
+              shouldFail = true;
+              break;
+            case 'unchanged':
+              statusEmoji = '⚠️';
+              statusTitle = 'Existing Issues Unchanged';
+              statusDescription = 'Architecture issues exist in both the base and this PR. Your changes did not introduce new issues, but existing issues remain.';
+              shouldFail = failOnFindings;
+              break;
+            case 'mixed':
+              statusEmoji = '🔄';
+              statusTitle = 'Mixed Changes';
+              statusDescription = 'This PR both fixes some issues and introduces new ones.';
+              shouldFail = true;
+              break;
+            default:
+              statusEmoji = '❓';
+              statusTitle = 'Unknown Status';
+              statusDescription = 'Unable to determine validation status.';
+              shouldFail = false;
+          }
+
+          // Build summary section
+          let summaryItems = [];
+          if (diff.summary.rule_violations_added_count > 0) {
+            summaryItems.push(`• ➕ **${diff.summary.rule_violations_added_count}** new rule violation(s)`);
+          }
+          if (diff.summary.rule_violations_removed_count > 0) {
+            summaryItems.push(`• ➖ **${diff.summary.rule_violations_removed_count}** rule violation(s) fixed`);
+          }
+          if (diff.summary.circles_added_count > 0) {
+            summaryItems.push(`• ➕ **${diff.summary.circles_added_count}** new circular ${diff.summary.circles_added_count === 1 ? 'dependency' : 'dependencies'}`);
+          }
+          if (diff.summary.circles_removed_count > 0) {
+            summaryItems.push(`• ➖ **${diff.summary.circles_removed_count}** circular ${diff.summary.circles_removed_count === 1 ? 'dependency' : 'dependencies'} fixed`);
+          }
+
+          const summarySection = summaryItems.length > 0
+            ? `\n### 📊 Summary\n\n${summaryItems.join('\n')}\n`
+            : '';
+
+          // Build details section
+          let detailsSections = [];
+
+          // Helper function to format violation location
+          const formatLocation = (loc) => {
+            const parts = [];
+            if (loc.package) parts.push(loc.package);
+            if (loc.module) parts.push(`::${loc.module}`);
+            if (loc.item) parts.push(`::${loc.item}`);
+            if (parts.length === 0 && loc.file_path) {
+              return loc.line ? `${loc.file_path}:${loc.line}` : loc.file_path;
+            }
+            return parts.length > 0 ? parts.join('') : '<unknown>';
+          };
+
+          if (diff.rule_violations_added.length > 0) {
+            let violations = diff.rule_violations_added.map(v =>
+              `  • ${formatLocation(v.from)} → ${formatLocation(v.to)}`
+            ).join('\n');
+            detailsSections.push(`**❌ New Rule Violations:**\n${violations}`);
+          }
+
+          if (diff.rule_violations_removed.length > 0) {
+            let violations = diff.rule_violations_removed.map(v =>
+              `  • ${formatLocation(v.from)} → ${formatLocation(v.to)}`
+            ).join('\n');
+            detailsSections.push(`**✅ Fixed Rule Violations:**\n${violations}`);
+          }
+
+          if (diff.circles_added.length > 0) {
+            let circles = diff.circles_added.map(c => `  • ${c.cycle.join(' → ')}`).join('\n');
+            detailsSections.push(`**❌ New Circular Dependencies:**\n${circles}`);
+          }
+
+          if (diff.circles_removed.length > 0) {
+            let circles = diff.circles_removed.map(c => `  • ${c.cycle.join(' → ')}`).join('\n');
+            detailsSections.push(`**✅ Fixed Circular Dependencies:**\n${circles}`);
+          }
+
+          const detailsSection = detailsSections.length > 0
+            ? `\n<details>\n<summary>📋 Details</summary>\n\n${detailsSections.join('\n\n')}\n\n</details>\n`
+            : '';
+
+          const commentBody = `## ${statusEmoji} TangleGuard Architecture Analysis
+
+          **${statusTitle}**
+
+          ${statusDescription}
+          ${summarySection}${detailsSection}
+          ---
+          <sub>🔍 Analyzed \`${baseSha.substring(0, 7)}\` → \`${headSha.substring(0, 7)}\` by [TangleGuard](https://tangleguard.com) | [Documentation](https://docs.tangleguard.com)</sub>`;
+
+          // Post the comment
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: commentBody
+          });
+
+          console.log('✅ Comment posted successfully');
+
+          // Set the action to fail if needed
+          if (shouldFail) {
+            core.setFailed('Architecture issues detected');
+          }
 
     - name: Upload results to TangleGuard Cloud
       shell: bash
