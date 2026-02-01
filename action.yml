@@ -195,11 +195,35 @@ runs:
           cat diff.err
         fi
 
+        # Debug: Show base.json and head.json contents
+        echo "Debug: base.json first 300 chars:"
+        head -c 300 base.json
+        echo ""
+        echo "Debug: head.json first 300 chars:"
+        head -c 300 head.json
+        echo ""
+        
         # Debug: Check diff.json
         echo "Debug: diff.json size: $(wc -c < diff.json) bytes"
-        echo "Debug: First 200 chars of diff.json:"
-        head -c 200 diff.json
+        echo "Debug: First 300 chars of diff.json:"
+        head -c 300 diff.json
         echo ""
+        
+        # Check if diff.json is empty or diff command failed
+        if [[ ! -s diff.json ]]; then
+          echo "❌ Error: diff.json is empty"
+          if [[ -s diff.err ]]; then
+            echo "Diff command error output:"
+            cat diff.err
+          fi
+          echo "Base and head JSON files:"
+          echo "=== base.json ==="
+          cat base.json
+          echo "=== head.json ==="
+          cat head.json
+          echo "Cannot proceed with empty diff output"
+          exit 1
+        fi
 
         # Save outputs for the next step
         echo "base_sha=$BASE_SHA" >> $GITHUB_OUTPUT
@@ -224,6 +248,13 @@ runs:
           const diffExitCode = parseInt('${{ steps.change_detection.outputs.diff_exit_code }}');
           const failOnFindings = '${{ inputs.fail_on_findings }}' === 'true';
 
+          // Check if diffJson is empty
+          if (!diffJson || diffJson.trim() === '') {
+            console.error('Diff JSON output is empty');
+            core.setFailed('Diff command produced no output - check validation step logs');
+            return;
+          }
+          
           let diff;
           try {
             diff = JSON.parse(diffJson);
