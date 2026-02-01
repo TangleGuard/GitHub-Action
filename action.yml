@@ -1,5 +1,5 @@
 name: "TangleGuard"
-description: "Abstracts your codebase into an interactive dependency graph diagram for architectural analysis."
+description: "Monitors architectural changes and enforces architectural rules."
 author: "Jan Arends"
 inputs:
   upload_results:
@@ -202,13 +202,13 @@ runs:
         echo "Debug: head.json first 300 chars:"
         head -c 300 head.json
         echo ""
-        
+
         # Debug: Check diff.json
         echo "Debug: diff.json size: $(wc -c < diff.json) bytes"
         echo "Debug: First 300 chars of diff.json:"
         head -c 300 diff.json
         echo ""
-        
+
         # Check if diff.json is empty or diff command failed
         if [[ ! -s diff.json ]]; then
           echo "❌ Error: diff.json is empty"
@@ -254,7 +254,7 @@ runs:
             core.setFailed('Diff command produced no output - check validation step logs');
             return;
           }
-          
+
           let diff;
           try {
             diff = JSON.parse(diffJson);
