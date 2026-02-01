@@ -1,19 +1,18 @@
-# TangleGuard Scanner
+# TangleGuard
 
-[TangleGuard](https://tangleguard.com/) is a tool to monitor and enforce your software architecture.
+[TangleGuard](https://tangleguard.com/) monitors and enforces your software architecture.
+This GitHub Action runs TangleGuard in your CI workflow, to you don't suffer from architecture erosion.
 
-You basically have two options how to use this Action:
+The Action detects circular dependencies and violations against user defined [dependency rules](https://docs.tangleguard.com/features/linter/#dependency-rules) - for example on a pull request.
 
-1. Use the architectural linter: You can run the action on a PR and it will fail if circular dependencies are found and hence the PR could be blocked. That way you ensure your code does not get tangled and does not include anti patterns. See the first example below.
-1. Upload results to TangleGuard Cloud: You can run the action e.g. manually, then the codebase within the GitHub runner and send to results to the [Cloud version of TangleGuard](https://app.tangleguard.com). There the dependencies can be analyzed visually without having to install anything locally. This is currently a **public** directory and hence only made for open source projects. See the second example below.
-
-![Screenshot](screenshot.png)
+![Screenshot](screenshot-comment-clean.png)
 
 ## Usage Examples
 
-### On PR: Detect Architecture Changes (Recommended)
+### Detect Architecture Changes on PR (Recommended)
 
-**NEW!** Use this example to detect architecture changes introduced by a pull request. This runs TangleGuard on both the base and head commits, then shows you the impact of your changes:
+Use this example to detect architecture changes introduced by a pull request.
+This runs TangleGuard on both the base and head commits, then shows you the impact of your changes:
 
 - ✅ "No issues found" - Clean before and after
 - ⚠️ "Issues exist in both" - Your changes didn't introduce new issues
@@ -23,6 +22,10 @@ You basically have two options how to use this Action:
 ```yaml
 name: TangleGuard PR Change Detection
 on: [pull_request]
+
+permissions:
+  pull-requests: write # Required to post a comment on the PR
+
 jobs:
   detect-architecture-changes:
     runs-on: ubuntu-latest
@@ -32,17 +35,21 @@ jobs:
         with:
           fetch-depth: 0 # Required for change detection
 
-      - name: Run TangleGuard with change detection
+      - name: Run TangleGuard's change detection
         uses: TangleGuard/github-action@main
         with:
-          language: "javascript"
+          language: "javascript" # <-- ADJUST
           detect_change: "true" # Enable change detection
-          fail_on_findings: "true"
+          fail_on_findings: "true" # <-- ADJUST
 ```
+
+The above configuration is recommended for projects that include circular dependencies or rule violations already and the goal is to not introduce more of those violations.
 
 ### On PR: Simple Validation
 
-Use this example if you only want to validate your codebase for circular dependencies and fail the workflow if any are found. This validates only the current commit.
+Use this example if you only want to validate your codebase and fail the workflow if any violations are found.
+This does not include a A/B testing as the configuration above.
+Instead it just runs the violations once on the latest commit.
 
 ```yaml
 name: Architecture Validation
@@ -53,17 +60,16 @@ jobs:
     steps:
       - uses: TangleGuard/github-action@main
         with:
-          language: "javascript"
+          language: "javascript" # <-- ADJUST
           fail_on_findings: "true" # Fail if circular dependencies are found
 ```
 
 Set `fail_on_findings: "false"` if you want to see the validation results without failing the workflow.
 
-### On PR: Upload to public directory
+### On PR: Upload to public directory (experimental)
 
-This is for open source projects ONLY.
-
-We'd be happy to host the UI for the monitoring if you work on a public projects which is licensed under the MIT license or Apache 2.0 license.
+We'd be happy to host the UI for the architecture analysis for projects under the MIT license or Apache 2.0 license.
+The configuration below, will uploaded to the result [public directory](https://app.tangleguard.com/) for public analysis.
 
 ```yaml
 name: TangleGuard Scan
@@ -75,11 +81,13 @@ jobs:
       - uses: TangleGuard/github-action@main
         with:
           upload_results: "true"
-          language: "rust" # <-- ADJUST
           description: "A CLI tool that.. " # <-- ADJUST (required when uploading)
+          language: "rust" # <-- ADJUST
 ```
 
-Private and proprietary repositories will be supported, too. TangleGuard keeps you architecture data very serious. To support private repositories, TangleGuard wants to have setup a proper multi-tenant secure platform. This will need resources to implement and infrastructure. If you are interested in a hosted, private version of TangleGuard, please contact us at kontakt@jaads.de.
+Private repositories will be supported, too.
+If you are interested in a hosted, private version of TangleGuard, please contact us at kontakt@jaads.de.
+We'll setup encryption and row level access control for proper, secure multi tenant platform.
 
 ## All Inputs
 
@@ -96,41 +104,38 @@ This GitHub Action can be configured in a few ways, depending on your needs. Bel
 | `fail_on_findings` | Fail the workflow if circular dependencies are found                             | No                               | true    |
 | `detect_change`    | Enable change detection between PR base and head (requires `pull_request` event) | No                               | false   |
 
-## Change Detection Feature
+## Troubleshooting
 
-When `detect_change` is enabled, the action analyzes both the base and head commits of a pull request to show the impact of your changes:
+### "Resource not accessible by integration" Error
 
-- **PASS → PASS**: No issues found in either commit ✅
-- **FAIL → FAIL**: Issues exist in both commits, but no new ones introduced ⚠️
-- **PASS → FAIL**: New architecture violations introduced ❌ (will fail the action)
-- **FAIL → PASS**: Existing issues resolved 🎉
+If you see this error when the action tries to post a PR comment, it means the GitHub token doesn't have permission to write comments.
 
-**Requirements:**
+**Solution 1: Add permissions to your workflow** (Recommended)
 
-- Must be run on a `pull_request` event
-- Requires `fetch-depth: 0` in the checkout step to access base commit
+Add the `permissions` section to your workflow file:
 
-**Example Output:**
-
+```yaml
+permissions:
+  pull-requests: write # Required to post PR comments
 ```
-📊 Analyzing changes between:
-   Base: abc123
-   Head: def456
 
-🔍 Analyzing BASE commit (abc123)...
-Base analysis complete (exit code: 0)
+**Solution 2: Change repository/organization settings**
 
-🔍 Analyzing HEAD commit (def456)...
-Head analysis complete (exit code: 1)
+1. Go to **Settings** → **Actions** → **General** → **Workflow permissions**
+2. Select **"Read and write permissions"**
+3. Save changes
 
-📈 Change Impact Summary:
-==========================
-❌ NEW ISSUES INTRODUCED!
-   Status: PASS → FAIL
+Note: For organization repositories, this setting might be controlled at the organization level. You'll need organization admin access to change it.
 
-⚠️  Your changes introduce new architecture violations!
-   Please review the head output above for details.
-```
+### Other Common Issues
+
+**Issue**: `fetch-depth: 0` is missing
+
+- **Solution**: Add `fetch-depth: 0` to your checkout step for change detection to work
+
+**Issue**: Validation fails with "Unrecognized argument"
+
+- **Solution**: Make sure you're using the latest version of the action (`@main` or a specific version tag)
 
 ## Deletion of projects from the public directory
 
