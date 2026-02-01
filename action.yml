@@ -134,8 +134,8 @@ runs:
         echo "   Head: $HEAD_SHA"
         echo ""
 
-        # Build base command
-        base_cmd="./tangleguard-cli -l ${{ inputs.language }} -p ${{ inputs.path }}"
+        # Build base command (with --quiet for clean JSON output)
+        base_cmd="./tangleguard-cli -q -l ${{ inputs.language }} -p ${{ inputs.path }}"
         if [[ -n "${{ inputs.ignore_paths }}" ]]; then
           base_cmd="$base_cmd --ignore-paths ${{ inputs.ignore_paths }}"
         fi
@@ -146,26 +146,60 @@ runs:
         git fetch origin "$BASE_SHA" --depth=1
         git checkout "$BASE_SHA"
 
-        $base_cmd > base.json 2>&1 || true
+        $base_cmd > base.json 2> base.err || true
         base_exit_code=$?
 
         echo "Base analysis complete (exit code: $base_exit_code)"
+        if [[ -s base.err ]]; then
+          echo "⚠️  Base validation stderr:"
+          cat base.err
+        fi
 
         # Run analysis on HEAD commit
         echo "🔍 Analyzing HEAD commit ($HEAD_SHA)..."
         git checkout "$HEAD_SHA"
 
-        $base_cmd > head.json 2>&1 || true
+        $base_cmd > head.json 2> head.err || true
         head_exit_code=$?
 
         echo "Head analysis complete (exit code: $head_exit_code)"
+        if [[ -s head.err ]]; then
+          echo "⚠️  Head validation stderr:"
+          cat head.err
+        fi
 
-        # Run diff command to compare results
+        # Debug: Check if JSON files exist and are valid
+        echo "🔍 Checking validation outputs..."
+        if [[ ! -f base.json ]]; then
+          echo "❌ Error: base.json not found"
+          exit 1
+        fi
+        if [[ ! -f head.json ]]; then
+          echo "❌ Error: head.json not found"
+          exit 1
+        fi
+
+        echo "Debug: base.json size: $(wc -c < base.json) bytes"
+        echo "Debug: head.json size: $(wc -c < head.json) bytes"
+
+        # Run diff command to compare results (stderr to file for debugging)
         echo "🔍 Computing diff..."
-        ./tangleguard-cli validate diff base.json head.json > diff.json 2>&1 || true
+        ./tangleguard-cli -q validate diff base.json head.json > diff.json 2> diff.err || true
         diff_exit_code=$?
 
         echo "Diff computation complete (exit code: $diff_exit_code)"
+
+        # Debug: Show any errors
+        if [[ -s diff.err ]]; then
+          echo "⚠️  Diff command stderr:"
+          cat diff.err
+        fi
+
+        # Debug: Check diff.json
+        echo "Debug: diff.json size: $(wc -c < diff.json) bytes"
+        echo "Debug: First 200 chars of diff.json:"
+        head -c 200 diff.json
+        echo ""
 
         # Save outputs for the next step
         echo "base_sha=$BASE_SHA" >> $GITHUB_OUTPUT
@@ -195,7 +229,16 @@ runs:
             diff = JSON.parse(diffJson);
           } catch (e) {
             console.error('Failed to parse diff JSON:', e);
-            core.setFailed('Failed to parse validation diff results');
+            console.error('Raw diff output (first 500 chars):', diffJson.substring(0, 500));
+            core.setFailed(`Failed to parse validation diff results: ${e.message}`);
+            return;
+          }
+
+          // Validate diff structure
+          if (!diff.summary || !diff.summary.status) {
+            console.error('Invalid diff structure - missing summary or status');
+            console.error('Diff object:', JSON.stringify(diff));
+            core.setFailed('Validation diff output has invalid structure');
             return;
           }
 
