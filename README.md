@@ -3,7 +3,7 @@
 [TangleGuard](https://tangleguard.com/) monitors and enforces your software architecture.
 This GitHub Action runs TangleGuard in your CI workflow, to you don't suffer from architecture erosion.
 
-The Action detects circular dependencies and violations against user defined [dependency rules](https://docs.tangleguard.com/features/linter/#dependency-rules) - for example on a pull request.
+The Action detects circular dependencies and violations against user defined [dependency rules](https://tangleguard.com/docs/features/validation) - for example on a pull request.
 
 ![Screenshot](screenshot-comment-clean.png)
 
@@ -146,7 +146,7 @@ To delete the project from the directory, please contact the owner directly via 
 This GitHub Action is licensed under the MIT License (see LICENSE file).
 
 However, this action downloads and uses the TangleGuard CLI tool, which is proprietary software subject to separate license terms.
-By using this GitHub Action, you agree to the [TangleGuard EULA](https://docs.tangleguard.com/legal/terms/).
+By using this GitHub Action, you agree to the [TangleGuard EULA](https://tangleguard.com/legal/eula).
 
 **Summary:**
 
