@@ -55,7 +55,7 @@ runs:
       shell: bash
       run: |
         echo "Downloading TangleGuard CLI..."
-        if ! curl -L -o tangleguard-cli https://tangleguard-builds.s3.eu-central-1.amazonaws.com/cli/latest/tangleguard-cli; then
+        if ! curl -L -o tangleguard-cli https://tangleguard-cli-builds.s3.eu-central-1.amazonaws.com/latest/tangleguard-cli_x86_64-unknown-linux-gnu; then
           echo "❌ Failed to download TangleGuard CLI"
           exit 1
         fi
@@ -83,7 +83,7 @@ runs:
           validate_cmd="$validate_cmd --ignore-paths ${{ inputs.ignore_paths }}"
         fi
 
-        validate_cmd="$validate_cmd validate run --circles --pretty"
+        validate_cmd="$validate_cmd validate --pretty"
 
         # Add --ci flag if fail_on_findings is true
         if [[ "${{ inputs.fail_on_findings }}" == "true" ]]; then
@@ -118,7 +118,7 @@ runs:
           if [[ -n "${{ inputs.ignore_paths }}" ]]; then
             validate_cmd="$validate_cmd --ignore-paths ${{ inputs.ignore_paths }}"
           fi
-          validate_cmd="$validate_cmd validate run --circles --pretty"
+          validate_cmd="$validate_cmd validate --pretty"
           if [[ "${{ inputs.fail_on_findings }}" == "true" ]]; then
             validate_cmd="$validate_cmd --ci"
           fi
@@ -139,7 +139,7 @@ runs:
         if [[ -n "${{ inputs.ignore_paths }}" ]]; then
           base_cmd="$base_cmd --ignore-paths ${{ inputs.ignore_paths }}"
         fi
-        base_cmd="$base_cmd validate run --circles"
+        base_cmd="$base_cmd validate"
 
         # Run analysis on BASE commit
         echo "🔍 Analyzing BASE commit ($BASE_SHA)..."
@@ -184,7 +184,7 @@ runs:
 
         # Run diff command to compare results (stderr to file for debugging)
         echo "🔍 Computing diff..."
-        ./tangleguard-cli -q validate diff base.json head.json > diff.json 2> diff.err || true
+        ./tangleguard-cli -q diff base.json head.json > diff.json 2> diff.err || true
         diff_exit_code=$?
 
         echo "Diff computation complete (exit code: $diff_exit_code)"
