@@ -414,7 +414,7 @@ runs:
 
         # Ensure an API token was provided before attempting an upload
         if [[ -z "${TANGLEGUARD_API_TOKEN}" ]]; then
-          echo "::error::api_token is required when upload_results is true. Create an API token in the TangleGuard web app and pass it via the 'api_token' input (e.g. \${{ secrets.TANGLEGUARD_API_TOKEN }})."
+          echo "::error::api_token is required when upload_results is true. Create an API token in the TangleGuard web app and pass it via the 'api_token' input (e.g. api_token: secrets.TANGLEGUARD_API_TOKEN)."
           exit 1
         fi
 
