@@ -75,7 +75,7 @@ runs:
 
     - name: Run TangleGuard one-time validation
       shell: bash
-      if: ${{ inputs.detect_change == 'false' }}
+      if: ${{ inputs.detect_change == 'false' && inputs.upload_results != 'true' }}
       run: |
         echo "🔍 Running TangleGuard validation..."
 
