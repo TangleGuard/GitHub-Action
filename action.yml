@@ -6,6 +6,9 @@ inputs:
     description: "To upload the scan result to TangleGuard Cloud for further analysis"
     required: false
     default: "false"
+  api_token:
+    description: "TangleGuard Cloud API token (required when upload_results is true). Create one in the TangleGuard web app and pass it via a secret."
+    required: false
   repository:
     description: "Repository in format 'owner/project' (optional, will be extracted from Git if not provided)"
     required: false
@@ -404,8 +407,16 @@ runs:
     - name: Upload results to TangleGuard Cloud
       shell: bash
       if: ${{ inputs.upload_results == 'true' }}
+      env:
+        TANGLEGUARD_API_TOKEN: ${{ inputs.api_token }}
       run: |
         echo "Scanning workspace and uploading results to TangleGuard Cloud..."
+
+        # Ensure an API token was provided before attempting an upload
+        if [[ -z "${TANGLEGUARD_API_TOKEN}" ]]; then
+          echo "::error::api_token is required when upload_results is true. Create an API token in the TangleGuard web app and pass it via the 'api_token' input (e.g. \${{ secrets.TANGLEGUARD_API_TOKEN }})."
+          exit 1
+        fi
 
         # Scan and upload results
         upload_cmd="./tangleguard-cli --language ${{ inputs.language }}"

@@ -81,9 +81,12 @@ jobs:
       - uses: TangleGuard/github-action@main
         with:
           upload_results: "true"
+          api_token: ${{ secrets.TANGLEGUARD_API_TOKEN }} # <-- Required when uploading
           description: "A CLI tool that.. " # <-- ADJUST (required when uploading)
           language: "rust" # <-- ADJUST
 ```
+
+To upload results, you need an API token. Create one in the [TangleGuard web app](https://app.tangleguard.com/), then add it to your repository as an [encrypted secret](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) named `TANGLEGUARD_API_TOKEN` and reference it via the `api_token` input as shown above. Never paste the token directly into your workflow file.
 
 Private repositories will be supported, too.
 If you are interested in a hosted, private version of TangleGuard, please contact us at kontakt@jaads.de.
@@ -96,6 +99,7 @@ This GitHub Action can be configured in a few ways, depending on your needs. Bel
 | Input              | Description                                                                      | Required                         | Default |
 | ------------------ | -------------------------------------------------------------------------------- | -------------------------------- | ------- |
 | `upload_results`   | Upload scan results to TangleGuard Cloud (public directory)                      | No                               | false   |
+| `api_token`        | TangleGuard Cloud API token (pass via an encrypted secret)                       | Yes (when `upload_results=true`) | -       |
 | `repository`       | Repository in format 'owner/project' (auto-detected from Git if empty)           | No                               | -       |
 | `language`         | Programming language (rust/javascript)                                           | Yes                              | -       |
 | `path`             | Path to scan                                                                     | No                               | `.`     |
