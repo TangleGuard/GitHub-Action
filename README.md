@@ -3,13 +3,13 @@
 [TangleGuard](https://tangleguard.com/) monitors and enforces your software architecture.
 This GitHub Action runs TangleGuard in your CI workflow, to you don't suffer from architecture erosion.
 
-The Action detects circular dependencies and violations against user defined [dependency rules](https://tangleguard.com/docs/features/validation) - for example on a pull request.
+The Action detects circular dependencies and violations against the user defined [target architecture](https://tangleguard.com/docs/getting-started/target-definition) - for example on a pull request.
 
 ![Screenshot](screenshot-comment-clean.png)
 
 ## Usage Examples
 
-### Detect Architecture Changes on PR (Recommended)
+### Detect Architecture Changes on PR
 
 Use this example to detect architecture changes introduced by a pull request.
 This runs TangleGuard on both the base and head commits, then shows you the impact of your changes:
