@@ -139,12 +139,13 @@ runs:
         echo "   Head: $HEAD_SHA"
         echo ""
 
-        # Build base command (with --quiet for clean JSON output)
+        # Build base command. -q silences logs; --format json is what diff needs
+        # (validate defaults to markdown).
         base_cmd="./tangleguard-cli -q -l ${{ inputs.language }} -p ${{ inputs.path }}"
         if [[ -n "${{ inputs.ignore_paths }}" ]]; then
           base_cmd="$base_cmd --ignore-paths ${{ inputs.ignore_paths }}"
         fi
-        base_cmd="$base_cmd validate"
+        base_cmd="$base_cmd validate --format json"
 
         # Run analysis on BASE commit
         echo "🔍 Analyzing BASE commit ($BASE_SHA)..."
