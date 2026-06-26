@@ -52,7 +52,7 @@ runs:
         echo "✅ Input validation passed"
 
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v7
 
     - name: Download TangleGuard CLI
       shell: bash
