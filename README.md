@@ -24,17 +24,13 @@ name: TangleGuard PR Change Detection
 on: [pull_request]
 
 permissions:
+  contents: read # Required to check out the repo (private repos fail without this)
   pull-requests: write # Required to post a comment on the PR
 
 jobs:
   detect-architecture-changes:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Required for change detection
-
       - name: Run TangleGuard's change detection
         uses: TangleGuard/github-action@main
         with:
@@ -54,6 +50,10 @@ Instead it just runs the violations once on the latest commit.
 ```yaml
 name: Architecture Validation
 on: [pull_request]
+
+permissions:
+  contents: read # Required to check out the repo (private repos fail without this)
+
 jobs:
   validate-architecture:
     runs-on: ubuntu-latest
@@ -74,6 +74,10 @@ The configuration below, will uploaded to the result [public directory](https://
 ```yaml
 name: TangleGuard Scan
 on: [push, pull_request]
+
+permissions:
+  contents: read # Required to check out the repo (private repos fail without this)
+
 jobs:
   scan-workspace:
     runs-on: ubuntu-latest

@@ -53,6 +53,8 @@ runs:
 
     - name: Checkout repository
       uses: actions/checkout@v7
+      with:
+        fetch-depth: 0 # full history required for change detection (base/head commits)
 
     - name: Download TangleGuard CLI
       shell: bash
