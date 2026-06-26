@@ -235,20 +235,17 @@ runs:
         echo "base_sha=$BASE_SHA" >> $GITHUB_OUTPUT
         echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
         echo "diff_exit_code=$diff_exit_code" >> $GITHUB_OUTPUT
-
-        # Save diff JSON output
-        {
-          echo "diff_json<<EOF"
-          cat diff.json
-          echo "EOF"
-        } >> $GITHUB_OUTPUT
+        # diff.json is read straight from disk by the next step (see github-script).
+        # Don't pipe it through GITHUB_OUTPUT + a JS template literal — control chars
+        # and backticks in the JSON corrupt it before JSON.parse.
 
     - name: Post PR comment with change detection results
       if: ${{ inputs.detect_change == 'true' && github.event.pull_request.number }}
       uses: actions/github-script@v7
       with:
         script: |
-          const diffJson = `${{ steps.change_detection.outputs.diff_json }}`;
+          const fs = require('fs');
+          const diffJson = fs.readFileSync(`${process.env.GITHUB_WORKSPACE}/diff.json`, 'utf8');
           const baseSha = '${{ steps.change_detection.outputs.base_sha }}';
           const headSha = '${{ steps.change_detection.outputs.head_sha }}';
           const diffExitCode = parseInt('${{ steps.change_detection.outputs.diff_exit_code }}');
