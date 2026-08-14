@@ -15,9 +15,6 @@ inputs:
   description:
     description: "Project description for TangleGuard Cloud"
     required: false
-  language:
-    description: "Programming language (rust|javascript)"
-    required: true
   path:
     description: "Path to the workspace to analyze (defaults to current directory)"
     required: false
@@ -81,7 +78,7 @@ runs:
       run: |
         echo "🔍 Running TangleGuard validation..."
 
-        validate_cmd="./tangleguard-cli -l ${{ inputs.language }} -p ${{ inputs.path }}"
+        validate_cmd="./tangleguard-cli -p ${{ inputs.path }}"
 
         # Add ignore paths if specified
         if [[ -n "${{ inputs.ignore_paths }}" ]]; then
@@ -119,7 +116,7 @@ runs:
           echo "   Change detection requires base and head commits from a pull request."
           echo "   Falling back to regular validation on current commit..."
 
-          validate_cmd="./tangleguard-cli -l ${{ inputs.language }} -p ${{ inputs.path }}"
+          validate_cmd="./tangleguard-cli -p ${{ inputs.path }}"
           if [[ -n "${{ inputs.ignore_paths }}" ]]; then
             validate_cmd="$validate_cmd --ignore-paths ${{ inputs.ignore_paths }}"
           fi
@@ -141,7 +138,7 @@ runs:
 
         # Build base command. -q silences logs; --format json is what diff needs
         # (validate defaults to markdown).
-        base_cmd="./tangleguard-cli -q -l ${{ inputs.language }} -p ${{ inputs.path }}"
+        base_cmd="./tangleguard-cli -q -p ${{ inputs.path }}"
         if [[ -n "${{ inputs.ignore_paths }}" ]]; then
           base_cmd="$base_cmd --ignore-paths ${{ inputs.ignore_paths }}"
         fi
@@ -419,7 +416,7 @@ runs:
         fi
 
         # Scan and upload results
-        upload_cmd="./tangleguard-cli --language ${{ inputs.language }}"
+        upload_cmd="./tangleguard-cli"
 
         # Add path if specified (default is current directory)
         if [[ -n "${{ inputs.path }}" ]]; then

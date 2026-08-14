@@ -145,7 +145,6 @@ Great job! This PR fixes existing architecture issues.
 
 - **`detect_change`** (default: `false`) - Enable change detection mode
 - **`fail_on_findings`** (default: `true`) - Fail action on violations
-- **`language`** (required) - Programming language
 - **`path`** (optional) - Workspace path
 - **`ignore_paths`** (optional) - Directories to ignore
 
@@ -168,7 +167,6 @@ jobs:
 
       - uses: TangleGuard/github-action@main
         with:
-          language: "rust"
           detect_change: "true"
           fail_on_findings: "true"
 ```
