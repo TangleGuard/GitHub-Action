@@ -34,20 +34,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Validate input parameters
-      shell: bash
-      run: |
-        echo "🔍 Validating input parameters..."
-
-        # Description is required when uploading results
-        if [[ "${{ inputs.upload_results }}" == "true" && -z "${{ inputs.description }}" ]]; then
-          echo "❌ Error: description is required when upload_results is enabled."
-          echo "   Please provide a project description for better identification on the website."
-          exit 1
-        fi
-
-        echo "✅ Input validation passed"
-
     - name: Checkout repository
       uses: actions/checkout@v7
       with:
